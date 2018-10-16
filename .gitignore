@@ -59,3 +59,12 @@ typings/
 
 # next.js build output
 .next
+
+# test
+test.js
+
+# config
+config/
+
+# bloodhound plugin
+mineflayer-bloodhound/

@@ -1,0 +1,27 @@
+{
+  "name": "mineflayer-sg",
+  "version": "1.0.0",
+  "description": "mineflayer plugin to play survival games",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JustARandomLoli/mineflayer-sg.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JustARandomLoli/mineflayer-sg/issues"
+  },
+  "homepage": "https://github.com/JustARandomLoli/mineflayer-sg#readme",
+  "dependencies": {
+    "mineflayer": "^2.7.3",
+    "mineflayer-armor-manager": "0.0.2",
+    "mineflayer-blockfinder": "0.0.7",
+    "mineflayer-bloodhound": "file:node_modules/mineflayer-bloodhound",
+    "mineflayer-navigate": "0.0.10",
+    "vec3": "^0.1.3"
+  }
+}
