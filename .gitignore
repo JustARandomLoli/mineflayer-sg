@@ -68,3 +68,6 @@ config/
 
 # bloodhound plugin
 mineflayer-bloodhound/
+
+# isnt needed i think
+package-lock.json
