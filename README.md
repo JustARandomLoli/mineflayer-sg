@@ -1,6 +1,5 @@
 # mineflayer-sg
-mineflayer plugin to play survivalgames
-this project is still in its very early stages, so dont expect much functionality
+mineflayer plugin to play survivalgames. This project is still in its very early stages, so dont expect much functionality
 
 ## TODO's
 - [x] Search for Chests
@@ -76,10 +75,9 @@ bot.on('error', (err) => {
 ```
 
 ## Ideas
-Ideas I have for some stuff
 
 ### Wandering/Running-away Navigation
-Create very simple mesh map where all hills are not walkable and everything wierd details are removed and or not walkable and putting 4*4 or 8*8 blocks into just one "block" then just let A* go over it.
+Create very simple mesh map where all hills are not walkable and everything wierd details are removed and or not walkable and putting 4\*4 or 8\*8 blocks into just one "block" then just let A\* go over it.
 
 ### Knockback
 Should be pretty simple...
