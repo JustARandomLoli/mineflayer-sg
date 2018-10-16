@@ -1,5 +1,6 @@
 # mineflayer-sg
 mineflayer plugin to play survivalgames
+this project is still in its very early stages, so dont expect much functionality
 
 ## TODO's
 - [x] Search for Chests
@@ -33,7 +34,7 @@ blockFinderPlugin(bot);
 sgPlugin(bot);
 ```
 
-### Example Code:
+### Example Code
 ```js
 var mineflayer = require('mineflayer');
 var navigatePlugin = require('mineflayer-navigate')(mineflayer);
@@ -73,3 +74,14 @@ bot.on('error', (err) => {
   console.log(err);
 });
 ```
+
+## Ideas
+Ideas I have for some stuff
+
+### Wandering/Running-away Navigation
+Create very simple mesh map where all hills are not walkable and everything wierd details are removed and or not walkable and putting 4*4 or 8*8 blocks into just one "block" then just let A* go over it.
+
+### Knockback
+Should be pretty simple...
+I think the server sends a velocity packet to the client, just need to interpret it.
+Not sure If mineflayer support velocity but probably just need to set it, if not I(or someone else) needs to make a plugin for that or commit it to the original mineflayer.
