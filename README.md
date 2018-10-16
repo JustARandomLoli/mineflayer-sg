@@ -11,6 +11,7 @@ mineflayer plugin to play survivalgames
 - [x] Search for Players
 - [x] Fight nearby Players
 - [ ] Only hit player when actually looking at him
+- [ ] Fighting with Bow
 - [ ] Adding knockback
 - [ ] Overall better Physics Engine
 - [ ] Pickup prioritized Items
