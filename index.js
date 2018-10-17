@@ -1,6 +1,13 @@
 const EventEmitter = require('events').EventEmitter;
 const vec3 = require('vec3').Vec3;
 
+var libs = {
+  fight: require('./lib/fight.js'),
+  chest: require('./lib/chest.js'),
+  wander: require('./lib/wander.js'),
+  webinterface: require('./lib/webinterface.js'),
+}
+
 module.exports = init;
 
 function init(mineflayer) {
@@ -14,17 +21,35 @@ function inject(bot) {
     'team': [ ],
     'breakableBlocks': [ 18, 161, 20, 46 ],
     'invertBreakable': false,
-    'missRate': 0.5,
+    'missRate': 0.2,
+    'canCraft': true,
   };
   bot.survivalgames.running = false;
   bot.survivalgames.gamestate = 'protected'; // [ 'protected', 'deathmatch', 'ingame', 'end', 'start' ]
   bot.survivalgames.dostate = 'none'; // [ 'none', 'inventory', 'fight', 'searching', 'wandering' ]
   bot.survivalgames.options = bot.survivalgames.defaultoptions;
-  bot.survivalgames.currentPath = null;
   bot.survivalgames.openedChests = [];
+  bot.survivalgames.spawnPoint = new vec3(0, 0, 0);
 
   bot.survivalgames.begin = begin;
   bot.survivalgames.stop = stop;
+
+  for(let k in libs) {
+    libs[k]()(bot);
+  }
+
+  bot.webinterface.start(80);
+
+  /* This kind of works for knockback */
+  bot._client.on('entity_velocity', (jsonMsg) => {
+    if(jsonMsg.entityId === bot.entity.id){
+      setTimeout(() => {
+        bot.entity.velocity.x = jsonMsg.velocityX / 200;
+        bot.entity.velocity.y = jsonMsg.velocityY / 300;
+        bot.entity.velocity.z = jsonMsg.velocityZ / 300;
+      }, 10);
+    }
+  });
 
   bot.navigate.on('cannotFind', function(path) {
     navStop();
@@ -38,9 +63,17 @@ function inject(bot) {
     navStop();
   });
 
+  bot.navigate.on('stop', function() {
+    navStop();
+  });
+
   function navStop() {
-    bot.survivalgames.currentPath = null;
-    bot.chat('navStop');
+    /*
+    if(['searching'].includes(bot.survivalgames.dostate)) {
+      bot.survivalgames.chest.search();
+    }
+    */
+    bot.survivalgames.dostate = 'none';
   }
 
   function begin(options = bot.survivalgames.defaultoptions) {
@@ -48,8 +81,7 @@ function inject(bot) {
       for(let k in options) {
         bot.survivalgames.options[k] = options[k];
       }
-      bot.survivalgames.currentPath = null;
-      bot.survivalgames.attackingPlayer = null;
+      bot.survivalgames.spawnPoint = bot.entity.position;
       bot.survivalgames.running = true;
       setTimeout(tick, 0);
       setTimeout(stick, 0);
@@ -59,10 +91,8 @@ function inject(bot) {
 
   function stop(reason) {
     if(bot.survivalgames.running) {
-      bot.survivalgames.currentPath = null;
       bot.survivalgames.running = false;
       bot.navigate.stop();
-      bot.survivalgames.attackingPlayer = null;
       bot.setControlState('sprint', false);
       bot.setControlState('jump', false);
       bot.setControlState('forward', false);
@@ -70,25 +100,12 @@ function inject(bot) {
     }
   }
 
-  bot.on('windowOpen', (window) => {
-    bot.survivalgames.dostate = 'inventory';
-    console.log(window);
-    new Promise(async(resolve, reject) => {
-      for(let item of window.slots) {
-        if(item != null) {
-          bot.clickWindow(item.slot, 1, 0);
-          //await wait(200);
-          //bot.clickWindow(window.inventorySlotStart + , 1, 0);
-          await wait(500);
-        }
-      }
-      bot.closeWindow(window);
-    });
-
+  bot.survivalgames.fight.on('stop', () => {
+    bot.survivalgames.dostate = 'none';
   });
 
-  bot.on('windowClose', (window) => {
-    bot.survivalgames.dostate = 'none';
+  bot.survivalgames.fight.on('begin', () => {
+    bot.survivalgames.dostate = 'fight';
   });
 
   function wait(millis) {
@@ -124,32 +141,40 @@ function inject(bot) {
     if(!bot.survivalgames.running) {
       return;
     }
-
-    if(bot.survivalgames.dostate === 'fight' && bot.survivalgames.attackingPlayer != null && bot.survivalgames.attackingPlayer.entity != null) {
-      var dist = bot.survivalgames.attackingPlayer.entity.position.distanceTo(bot.entity.position);
-      var p = bot.survivalgames.attackingPlayer.entity.position.offset(0, 1.8, 0);
-      bot.lookAt(p);
-      if(dist < 10) {
-        if(dist >= 3 && Math.random() > bot.survivalgames.options.missRate) {
-           bot._client.write('arm_animation', {hand:0});
-        }else if(dist < 3){
-          bot._client.write('arm_animation', {hand:0});
+    /*
+    if(['searching', 'none', 'wandering'].includes(bot.survivalgames.dostate)) {
+      var blocks = bot.findBlockSync({
+        point: bot.entity.position,
+        matching: (block) => {
+          return bot.survivalgames.options.chestBlocks.includes(block.type) || bot.survivalgames.options.chestBlocks.includes(block.type + ':' + block.metadata);
+        },
+        maxDistance: 5,
+        count: 10,
+      });
+      if(blocks.length > 0) {
+        for(let block of blocks) {
+          if(!bot.survivalgames.openedChests.includes(block.position.toString())) {
+            bot.survivalgames.openedChests.push(block.position.toString());
+            bot.activateBlock(block);
+            bot.survivalgames.currentPath = null;
+            bot.survivalgames.dostate = 'none';
+            break;
+          }
         }
-        if(Math.random() > bot.survivalgames.options.missRate && dist < 2.5) {
-          bot.attack(bot.survivalgames.attackingPlayer.entity);
-        }
-      }
-    }else if(['searching', 'none', 'wandering'].includes(bot.survivalgames.dostate) && bot.survivalgames.currentPath != null && !bot.survivalgames.openedChests.includes(bot.survivalgames.currentPath)) {
-      bot.lookAt(bot.survivalgames.currentPath);
-      if(bot.survivalgames.currentPath.distanceTo(bot.entity.position) < 4) {
-        bot.setControlState('sprint', false);
-        bot.setControlState('jump', false);
-        bot.setControlState('forward', false);
-        bot.activateBlock(bot.blockAt(bot.survivalgames.currentPath));
-        bot.survivalgames.openedChests.push(bot.survivalgames.currentPath);
       }
     }
-
+    */
+    /*
+    if(['searching', 'none', 'wandering'].includes(bot.survivalgames.dostate) && bot.survivalgames.currentPath != null && !bot.survivalgames.openedChests.includes(bot.survivalgames.currentPath.toString())) {
+      var block = bot.blockAt(bot.survivalgames.currentPath);
+      if(bot.survivalgames.currentPath.distanceTo(bot.entity.position) < 4 && (bot.survivalgames.options.chestBlocks.includes(block.type) || bot.survivalgames.options.chestBlocks.includes(block.type + ':' + block.metadata))) {
+        bot.survivalgames.openedChests.push(bot.survivalgames.currentPath.toString());
+        bot.activateBlock(block);
+        bot.survivalgames.currentPath = null;
+        bot.survivalgames.dostate = 'none';
+      }
+    }
+    */
 
     if(bot.survivalgames.running) {
       setTimeout(tick, 100);
@@ -160,13 +185,13 @@ function inject(bot) {
     if(!bot.survivalgames.running) {
       return;
     }
-    if(['searching', 'fight', 'none', 'wandering'].includes(bot.survivalgames.dostate)) {
+    if(['searching', 'none', 'wandering'].includes(bot.survivalgames.dostate)) {
       (async() => {
         var smallestDistance = Number.MAX_SAFE_INTEGER;
         var nearestPlayer;
         for(let name in bot.players) {
           let player = bot.players[name];
-          if(player.entity != null && player.username != bot.username) {
+          if(player.entity != null && player.username != bot.username && !bot.survivalgames.options.team.includes(player.username)) {
             var pp = new vec3(player.entity.position.x, 1, player.entity.position.z);
             var mp = new vec3(bot.entity.position.x, 1, bot.entity.position.z);
             var dist = pp.distanceTo(mp);
@@ -178,55 +203,44 @@ function inject(bot) {
         }
         if(smallestDistance > 32 && nearestPlayer != null && nearestPlayer.entity != null) {
           bot.survivalgames.dostate = 'none';
-          bot.survivalgames.attackingPlayer = null;
-          bot.setControlState('sprint', false);
-          bot.setControlState('jump', false);
-          bot.setControlState('forward', false);
+          bot.survivalgames.fight.stop();
           let re = bot.navigate.findPathSync(nearestPlayer.entity.position, { timeout: 800 });
-          if( re.status === 'success' ) {
-            bot.survivalgames.currentPath = nearestPlayer.entity.position;
-            bot.navigate.walk(re.path);
-          }else{
-            bot.chat(re.status);
-          }
+          bot.navigate.walk(re.path);
         }else if(nearestPlayer != null && nearestPlayer.entity != null){
           bot.navigate.stop();
           bot.survivalgames.dostate = 'fight';
-          bot.survivalgames.attackingPlayer = nearestPlayer;
-          bot.setControlState('sprint', true);
-          bot.setControlState('jump', true);
-          bot.setControlState('forward', true);
+          bot.survivalgames.fight.begin(nearestPlayer);
         }else{
-          bot.survivalgames.dostate = 'none';
+          if(bot.survivalgames.fight.isRunning()) {
+            bot.survivalgames.fight.stop();
+          }
         }
       })();
     }
 
-    if(['searching', 'none', 'wandering'].includes(bot.survivalgames.dostate)) {
-      setTimeout(() => {
-        if(bot.survivalgames.currentPath == null) {
-          var blocks = bot.findBlockSync({
-            point: bot.entity.position,
-            matching: (block) => {
-              return bot.survivalgames.options.chestBlocks.includes(block.type) || bot.survivalgames.options.chestBlocks.includes(block.type + ':' + block.metadata);
-            },
-            maxDistance: 64,
-            count: 10,
-          });
-          if (blocks.length) {
-            for(let block of blocks) {
-              if(!bot.survivalgames.openedChests.includes(block.position)) {
-                bot.survivalgames.dostate = 'searching';
-                bot.survivalgames.currentPath = block.position;
-                bot.lookAt(block.position);
-                bot.setControlState('sprint', true);
-                bot.setControlState('jump', true);
-                bot.setControlState('forward', true);
-                break;
-              }
-            }
+    console.log(bot.survivalgames.dostate);
+    if(['none', 'wandering'].includes(bot.survivalgames.dostate)) {
+      bot.survivalgames.chest.search().then((success) => {
+        console.log(success);
+        if(success) {
+          bot.survivalgames.dostate = 'searching';
+        }
+      });
+    }
 
-          }
+    if(bot.survivalgames.dostate === 'none') {
+      bot.survivalgames.dostate = 'wandering';
+      setTimeout(() => {
+        if(bot.survivalgames.dostate === 'wandering') {
+
+          var randomRadius = 400;
+          var randomX = Math.floor((Math.random() - 0.5) * randomRadius * 2);
+          var randomZ = Math.floor((Math.random() - 0.5) * randomRadius * 2);
+          var yOffset = 5;
+
+          let re = bot.navigate.findPathSync(bot.entity.position.offset(randomX, yOffset, randomZ), { timeout: 800 });
+          bot.survivalgames.dostate = 'wandering';
+          bot.navigate.walk(re.path);
         }
       }, 100);
     }

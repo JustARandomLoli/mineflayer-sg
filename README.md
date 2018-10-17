@@ -1,22 +1,33 @@
 # mineflayer-sg
-mineflayer plugin to play survivalgames. This project is still in its very early stages, so dont expect much functionality
+mineflayer plugin to play survivalgames. This project is still in its very early stages, so dont expect much functionality.
 
 ## TODO's
 - [x] Search for Chests
 - [x] Save already opened Chests and dont open again
 - [ ] Run away at the start and dont fight anyone
-- [ ] Create nav algorithm for wandering about(and for running away)
+- [ ] (prob dont need this)Create more efficient nav algorithm for wandering about(and for running away) <- (maybe)
 - [ ] Loot Chests
 - [ ] Prioritize Items
+- [ ] Sort Inventory
+- [ ] Realign Inventory when something breaks or all food got aten or new Item got into Inventory
 - [x] Search for Players
 - [x] Fight nearby Players
 - [ ] Only hit player when actually looking at him
 - [ ] Fighting with Bow
-- [ ] Adding knockback
+- [x] Adding knockback
 - [ ] Overall better Physics Engine
 - [ ] Pickup prioritized Items
 - [ ] Not jumping into lava when a Player is behind it
 - [ ] Upgrade mineflayer-navigate so the Bot can sprint(and jump) while navigating
+- [ ] Sprint/Jump Food Logic
+- [ ] Break breakable blocks if they are an obsticle
+- [ ] Making the code look fancy and sorted
+- [ ] Make a terrain simplifyer for the navigation algorithm
+- [ ] Open Doors,etc... if they are an obsticle
+- [ ] Dont jump on fences and stand on open fence gates
+- [ ] More natural navigation
+- [ ] Logic to stay near team players
+- [ ] Logic to team boost near enemy that is running away (alternativly using the rod self boosting)
 
 ## Usage
 (mineflayer-navigate and mineflayer-blockfinder are needed!)
@@ -78,8 +89,3 @@ bot.on('error', (err) => {
 
 ### Wandering/Running-away Navigation
 Create very simple mesh map where all hills are not walkable and everything wierd details are removed and or not walkable and putting 4\*4 or 8\*8 blocks into just one "block" then just let A\* go over it.
-
-### Knockback
-Should be pretty simple...
-I think the server sends a velocity packet to the client, just need to interpret it.
-Not sure If mineflayer support velocity but probably just need to set it, if not I(or someone else) needs to make a plugin for that or commit it to the original mineflayer.
