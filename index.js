@@ -44,9 +44,9 @@ function inject(bot) {
   bot._client.on('entity_velocity', (jsonMsg) => {
     if(jsonMsg.entityId === bot.entity.id){
       setTimeout(() => {
-        bot.entity.velocity.x = jsonMsg.velocityX / 200;
-        bot.entity.velocity.y = jsonMsg.velocityY / 300;
-        bot.entity.velocity.z = jsonMsg.velocityZ / 300;
+        bot.entity.velocity.x = jsonMsg.velocityX / 320;
+        bot.entity.velocity.y = jsonMsg.velocityY / 320;
+        bot.entity.velocity.z = jsonMsg.velocityZ / 320;
       }, 10);
     }
   });
