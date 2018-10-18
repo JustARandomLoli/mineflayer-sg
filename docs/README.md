@@ -90,8 +90,3 @@ bot.on('error', (err) => {
   console.log(err);
 });
 ```
-
-## Ideas
-
-### Wandering/Running-away Navigation
-Create very simple mesh map where all hills are not walkable and everything wierd details are removed and or not walkable and putting 4\*4 or 8\*8 blocks into just one "block" then just let A\* go over it.
