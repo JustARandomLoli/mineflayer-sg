@@ -1,5 +1,8 @@
 # mineflayer-sg
-mineflayer plugin to play survivalgames. This project is still in its very early stages, so dont expect much functionality.
+mineflayer-sg is a mineflayer plugin to play survivalgames. This project is still in its very early stages, so dont expect much functionality.
+
+## Contribute
+Contributions are very much welcomed!
 
 ## TODO's
 - [x] Search for Chests
@@ -28,6 +31,9 @@ mineflayer plugin to play survivalgames. This project is still in its very early
 - [ ] More natural navigation
 - [ ] Logic to stay near team players
 - [ ] Logic to team boost near enemy that is running away (alternativly using the rod self boosting)
+- [ ] Logic for when its best to fight and when its best to run or hide or go loot
+- [ ] Currently cant go through doors,etc... fix that
+- [ ] Press Buttons and Levers to open doors
 
 ## Usage
 (mineflayer-navigate and mineflayer-blockfinder are needed!)
